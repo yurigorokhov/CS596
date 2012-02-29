@@ -7,22 +7,22 @@
 #include <cuda.h>
 #include "../include/cuda_util.h"
 
-#define ARRAY_SIZE 256
 #define ITERATIONS 10000000
+#define NUM_THREADS 256
 
-__global__ void kernel1();
+__global__ void kernel_with_conditionals();
+__global__ void kernel_without_conditionals();
 
 int main() {
-	int *dev_array;
 	cudaEvent_t start, stop;
 	float elapsedTime;
 	
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 	
-	// conditionals
+	// with conditionals
 	cudaEventRecord(start,0);
-	kernel1<<<1, ARRAY_SIZE>>>();
+	kernel_with_conditionals<<<1, NUM_THREADS>>>();
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&elapsedTime, start, stop);	
@@ -30,16 +30,16 @@ int main() {
 
 	// without conditionals
 	cudaEventRecord(start,0);
-	//shared_mem_kernel<<<1, ARRAY_SIZE>>>();
+	kernel_without_conditionals<<<1,NUM_THREADS>>>();
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&elapsedTime, start, stop);	
-	printf("Shared memory: %f\n", elapsedTime);
+	printf("Time without conditionals: %f\n", elapsedTime);
 
     return 0;
 }
 
-__global__ void kernel1() {
+__global__ void kernel_with_conditionals() {
 	int temp = 0;
 	for(int i=0; i < ITERATIONS; i++) {
 		if(threadIdx.x % 2 == 0)
@@ -47,4 +47,14 @@ __global__ void kernel1() {
 		else
 			temp -= 1;
 	}
+	__syncthreads();
 }
+
+__global__ void kernel_without_conditionals() {
+	int temp = 0;
+	for(int i=0; i < ITERATIONS; i++) {
+		temp += (-threadIdx.x%2) + (1 - threadIdx.x%2);
+	}
+	__syncthreads();
+}
+
