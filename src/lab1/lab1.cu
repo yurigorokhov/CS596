@@ -47,6 +47,7 @@ __global__ void global_mem_kernel(int *array) {
 		int tmp = array[threadIdx.x];
 		array[threadIdx.x] = tmp;
 	}
+	__syncthreads();
 }
 
 __global__ void shared_mem_kernel() {
@@ -55,4 +56,5 @@ __global__ void shared_mem_kernel() {
 		int tmp = array[threadIdx.x];
 		array[threadIdx.x] = tmp;
 	}
+	__syncthreads();
 }
