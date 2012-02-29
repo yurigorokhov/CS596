@@ -51,7 +51,7 @@ __global__ void global_mem_kernel(int *array) {
 }
 
 __global__ void shared_mem_kernel() {
-	int array[ARRAY_SIZE];
+	__shared__ int array[ARRAY_SIZE];
 	for(int i = 0; i < ITERATIONS; i++) {
 		int tmp = array[threadIdx.x];
 		array[threadIdx.x] = tmp;
