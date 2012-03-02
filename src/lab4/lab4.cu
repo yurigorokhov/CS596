@@ -40,6 +40,7 @@ __global__ void kernel_row() {
 	for(int i = 0; i < ARRAY_SIZE-1; i++) {
 		sum += A[threadIdx.x][i];
 	}
+	__syncthreads();
 }
 
 __global__ void kernel_col() {
@@ -48,5 +49,6 @@ __global__ void kernel_col() {
 	for(int i = 0; i < ARRAY_SIZE-1; i++) {
 		sum += A[i][threadIdx.x];
 	}
+	__syncthreads();
 }
 
