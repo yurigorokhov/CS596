@@ -7,9 +7,9 @@
 #include <cuda.h>
 #include <math.h>
 
-#define ITERATIONS 10000
+#define ITERATIONS 100000
 #define THREADS 32
-#define POW 10
+#define POW 30
 
 __global__ void kernel_mod(int);
 
@@ -29,10 +29,11 @@ int main (void) {
 		cudaEventSynchronize(stop);
 		cudaEventElapsedTime(&output[i], start, stop);
 	}
+	printf("[");
 	for(int i = 0; i < POW; i++) {
 		printf("%i, ", input[i]);
 	}
-	printf("\n");
+	printf("\n[");
 	for(int i = 0; i < POW; i++) {
 		printf("%f, ", output[i]);
 	}
