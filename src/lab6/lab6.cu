@@ -63,11 +63,12 @@ void error(char * msg) {
 
 __global__ void sum_kernel(float * array, int length) {
 	int offset = 1;
+	int thread = threadIdx.x;
 	for(int d = length>>1; d > 0; d >>= 1) {
 		__syncthreads();
-		if(threadIdx.x < d) {
-			int ai = offset * (2*threadIdx.x + 1) -1;
-			int bi = offset * (2*threadIdx.x + 2) -1;
+		if(thread < d) {
+			int ai = offset * (2*thread + 1) -1;
+			int bi = offset * (2*thread.x + 2) -1;
 		
 			array[bi] += array[ai];
 		}
@@ -75,7 +76,7 @@ __global__ void sum_kernel(float * array, int length) {
 	}
 
 	// Copy result to beginning of array
-	if(threadIdx.x == 0) {
+	if(thread.x == 0) {
 		array[0] = array[length-1];
 	}
 	__syncthreads();
