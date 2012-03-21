@@ -68,7 +68,7 @@ __global__ void sum_kernel(float * array, int length) {
 		__syncthreads();
 		if(thread < d) {
 			int ai = offset * (2*thread + 1) -1;
-			int bi = offset * (2*thread.x + 2) -1;
+			int bi = offset * (2*thread + 2) -1;
 		
 			array[bi] += array[ai];
 		}
@@ -76,7 +76,7 @@ __global__ void sum_kernel(float * array, int length) {
 	}
 
 	// Copy result to beginning of array
-	if(thread.x == 0) {
+	if(thread == 0) {
 		array[0] = array[length-1];
 	}
 	__syncthreads();
