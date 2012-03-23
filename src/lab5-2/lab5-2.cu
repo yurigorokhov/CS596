@@ -1,6 +1,6 @@
 /**
  * Yuri Gorokhov
- * lab 6 - Integration
+ * lab 5-2 - Integration
  */
 
 #include <stdio.h>
