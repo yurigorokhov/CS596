@@ -110,10 +110,8 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath) {
     }
   } 
   
-  if(threadIdx.x == 0)
+  if(threadIdx.x == 0) {
     *shortestpath = matrix[MAT_SIZE * MAT_SIZE - 1];
-  __syncthreads();
+  }
+  __syncthreads(); 
 }
-
-
-
