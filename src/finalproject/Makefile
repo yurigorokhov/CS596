@@ -1,6 +1,6 @@
 CC = nvcc
 LDFLAGS = -L/usr/lib/nvidia-current
-CCFLAGS = -g
+CCFLAGS = -g -G
 OBJS = shortestpath.o stack.o 
 TARGET = shortestpath.exe
 
