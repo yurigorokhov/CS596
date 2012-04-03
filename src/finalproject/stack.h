@@ -3,8 +3,8 @@
  * Stack method declarations
  */
 
-#ifndef _STRUCT_H_
-#define _STRUCT_H_
+#ifndef _STACK_H_
+#define _STACK_H_
 
 typedef struct {
   int * array;
