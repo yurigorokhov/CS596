@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <cuda.h>
 #include <math.h>
-#include <time.h>
+#include <sys/time.h>
 
 #define MAT_SIZE 16
 #define MAX_ELEMENT 512
@@ -22,6 +22,11 @@ typedef struct {
 
 int main() {
   
+  printf("\nSHORTEST PATH: %i x %i\n\n", MAT_SIZE, MAT_SIZE);
+  
+  cudaEvent_t start, stop;
+  float elapsedTime;
+  
   // Create a matrix and populate it with random data
   Matrix mat;
   mat.array = (int*)malloc(MAT_SIZE * MAT_SIZE * sizeof(int));
@@ -34,6 +39,9 @@ int main() {
   // ######### CUDA #########
   printf("CUDA Implementation: ");
   
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  
   // Copy matrix to global memory
   int *DevMat, *dev_shortest_path, *dev_result_stack;
   cudasafe( cudaMalloc((void**)&dev_shortest_path, sizeof(int)), "cudaMalloc" );
@@ -44,7 +52,11 @@ int main() {
   // Compute shortest path with cpu
   int shortestpath = 0;
   int *result_stack = (int*)malloc(MAT_SIZE * 2 * sizeof(int));
+  cudaEventRecord(start,0);
   shortest_path_cuda<<<1,MAT_SIZE>>>(DevMat, dev_shortest_path, dev_result_stack);
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&elapsedTime, start, stop);
   cudasafe( cudaMemcpy(&shortestpath, dev_shortest_path, sizeof(int), cudaMemcpyDeviceToHost) ,"cudaMemcpy");
   cudasafe( cudaMemcpy(result_stack, dev_result_stack, MAT_SIZE * 2 * sizeof(int), cudaMemcpyDeviceToHost) ,"cudaMemcpy");
   cudasafe( cudaFree(DevMat), "cudaFree" );
@@ -52,6 +64,7 @@ int main() {
   cudasafe( cudaFree(dev_shortest_path), "cudaFree" );
   
   // Print path taken 
+  printf("\nelapsed time: %f\n", elapsedTime);
   printf("\nShortest Path: %i -> ", shortestpath);
   int i = -1; 
   while(result_stack[++i] >= 0);
@@ -68,9 +81,14 @@ int main() {
   stack_init(&result, MAT_SIZE*2);
   
   // Compute shortest path with cpu
+  cudaEventRecord(start,0);
   shortestpath = shortest_path_cpu(&mat, &result);
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&elapsedTime, start, stop);
   
   // Print path taken 
+  printf("\nelapsed time: %f\n", elapsedTime);
   printf("\nShortest Path: %i -> ", shortestpath);
   while(!is_empty(&result)) {
     printf("%i,", pop(&result));
