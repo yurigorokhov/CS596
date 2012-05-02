@@ -4,8 +4,9 @@
 #include <math.h>
 #include <sys/time.h>
 
-#define MAT_SIZE 16
-#define MAX_ELEMENT 512
+#define MAT_SIZE 512*29
+#define BLOCK_SIZE 512
+#define MAX_ELEMENT 12
 
 #include "stack.h"
 #include "../include/cuda_util.h"
@@ -20,12 +21,12 @@ typedef struct {
 #include "shortestpath_cuda.h"
 #include "shortestpath.h"
 
-int main() {
+int main(int argc, char**argv) {
   
   printf("\nSHORTEST PATH: %i x %i\n\n", MAT_SIZE, MAT_SIZE);
   
   cudaEvent_t start, stop;
-  float elapsedTime;
+  float elapsedTime, elapsedTime2;
   
   // Create a matrix and populate it with random data
   Matrix mat;
@@ -46,33 +47,47 @@ int main() {
   int *DevMat, *dev_shortest_path, *dev_result_stack;
   cudasafe( cudaMalloc((void**)&dev_shortest_path, sizeof(int)), "cudaMalloc" );
   cudasafe( cudaMalloc((void**)&DevMat, MAT_SIZE * MAT_SIZE * sizeof(int)), "cudaMalloc" );
-  cudasafe( cudaMalloc((void**)&dev_result_stack, MAT_SIZE * 2 * sizeof(int)), "cudaMalloc" );
+  if(argc > 1)
+    cudasafe( cudaMalloc((void**)&dev_result_stack, MAT_SIZE * 2 * sizeof(int)), "cudaMalloc" );
   cudasafe( cudaMemcpy(DevMat, mat.array, MAT_SIZE * MAT_SIZE * sizeof(int), cudaMemcpyHostToDevice), "cudaMemcpy" );
   
   // Compute shortest path with cpu
   int shortestpath = 0;
   int *result_stack = (int*)malloc(MAT_SIZE * 2 * sizeof(int));
   cudaEventRecord(start,0);
-  shortest_path_cuda<<<1,MAT_SIZE>>>(DevMat, dev_shortest_path, dev_result_stack);
+  dim3 threadsPerBlock(BLOCK_SIZE);
+  for(int i = 1; i < MAT_SIZE; i++) {
+    dim3 blocks((int)ceil((float)(i+1) / (float)threadsPerBlock.x));
+    shortest_path_cuda<<<blocks,threadsPerBlock>>>(DevMat, dev_shortest_path, dev_result_stack, i);
+  }
+  for(int i = 1; i < MAT_SIZE; i++) {    
+    dim3 blocks((int)ceil((float)(MAT_SIZE-i) / (float)threadsPerBlock.x));
+    shortest_path_cuda_2<<<blocks,threadsPerBlock>>>(DevMat, dev_shortest_path, dev_result_stack, i);
+  }
+  if(argc > 1)
+    shortest_path_cuda_3<<<1,1>>>(DevMat, dev_shortest_path, dev_result_stack);
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&elapsedTime, start, stop);
   cudasafe( cudaMemcpy(&shortestpath, dev_shortest_path, sizeof(int), cudaMemcpyDeviceToHost) ,"cudaMemcpy");
   cudasafe( cudaMemcpy(result_stack, dev_result_stack, MAT_SIZE * 2 * sizeof(int), cudaMemcpyDeviceToHost) ,"cudaMemcpy");
   cudasafe( cudaFree(DevMat), "cudaFree" );
-  cudasafe( cudaFree(dev_result_stack), "cudaFree" );
+  if(argc > 1)
+    cudasafe( cudaFree(dev_result_stack), "cudaFree" );
   cudasafe( cudaFree(dev_shortest_path), "cudaFree" );
   
   // Print path taken 
   printf("\nelapsed time: %f\n", elapsedTime);
   printf("\nShortest Path: %i -> ", shortestpath);
-  int i = -1; 
-  while(result_stack[++i] >= 0);
-  for(i--; i >= 0; i--) {
-    printf("%i,", result_stack[i]);
-  }
-  printf("\n");
   
+  if(argc > 1) {
+    int i = -1; 
+    while(result_stack[++i] >= 0);
+    for(i--; i >= 0; i--) {
+      printf("%i,", result_stack[i]);
+    }
+    printf("\n");
+  }
   // ######### CPU Implementation #########
   printf("\n\nCPU Implementation: ");
   
@@ -85,15 +100,18 @@ int main() {
   shortestpath = shortest_path_cpu(&mat, &result);
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&elapsedTime, start, stop);
+  cudaEventElapsedTime(&elapsedTime2, start, stop);
   
   // Print path taken 
-  printf("\nelapsed time: %f\n", elapsedTime);
+  printf("\nelapsed time: %f\n", elapsedTime2);
   printf("\nShortest Path: %i -> ", shortestpath);
-  while(!is_empty(&result)) {
-    printf("%i,", pop(&result));
+  if(argc > 1) {
+    while(!is_empty(&result)) {
+      printf("%i,", pop(&result));
+    }
+    printf("\n");
   }
-  printf("\n");
+  printf("\nSpeedup: %f\n", elapsedTime2/elapsedTime);
   
   return 0;
 }
