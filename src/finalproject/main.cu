@@ -4,7 +4,7 @@
 #include <math.h>
 #include <sys/time.h>
 
-#define MAT_SIZE 512*29
+#define MAT_SIZE 512
 #define BLOCK_SIZE 512
 #define MAX_ELEMENT 12
 
@@ -70,7 +70,8 @@ int main(int argc, char**argv) {
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&elapsedTime, start, stop);
   cudasafe( cudaMemcpy(&shortestpath, dev_shortest_path, sizeof(int), cudaMemcpyDeviceToHost) ,"cudaMemcpy");
-  cudasafe( cudaMemcpy(result_stack, dev_result_stack, MAT_SIZE * 2 * sizeof(int), cudaMemcpyDeviceToHost) ,"cudaMemcpy");
+  if(argc > 1)
+    cudasafe( cudaMemcpy(result_stack, dev_result_stack, MAT_SIZE * 2 * sizeof(int), cudaMemcpyDeviceToHost) ,"cudaMemcpy");
   cudasafe( cudaFree(DevMat), "cudaFree" );
   if(argc > 1)
     cudasafe( cudaFree(dev_result_stack), "cudaFree" );
