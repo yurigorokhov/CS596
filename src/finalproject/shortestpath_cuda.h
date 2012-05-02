@@ -7,12 +7,10 @@
  * Path is returned as 1 for right, 0 for down
  * Note: this algorithm goes from top left to bottom right corner
  */
-__global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result) {
+__global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result, int * matrix) {
   
-  // Copy Mat to shared memory
-  __shared__ int matrix[MAT_SIZE * MAT_SIZE];
-  
-  if(threadIdx.x == 0) {
+  int x = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+  if(x == 0) {
     matrix[0] = mat[0];
   }
   
@@ -21,11 +19,11 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result) 
     __syncthreads();
     
     // only use the threads we need
-    if(threadIdx.x <= i) {
-      int idx = threadIdx.x * MAT_SIZE + (i - threadIdx.x);
-      if(threadIdx.x == 0) {
+    if(x <= i) {
+      int idx = x * MAT_SIZE + (i - x);
+      if(x == 0) {
 	matrix[idx] = matrix[idx-1] + mat[idx];
-      } else if(i - threadIdx.x == 0) {
+      } else if(i - x == 0) {
 	matrix[idx] = matrix[idx - MAT_SIZE] + mat[idx];
       } else {	
 	int path1 = idx - 1;
@@ -42,8 +40,8 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result) 
     __syncthreads();
     
     // only use the threads we need
-    if(threadIdx.x < MAT_SIZE - i) {
-      int idx = (MAT_SIZE - threadIdx.x - 1) + (threadIdx.x + i) * MAT_SIZE;
+    if(x < MAT_SIZE - i) {
+      int idx = (MAT_SIZE - x - 1) + (x + i) * MAT_SIZE;
       int path1 = idx - 1;
       int path2 = idx - MAT_SIZE;
       matrix[idx] = matrix[path1] < matrix[path2] 
@@ -54,9 +52,9 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result) 
   
   
   // Record path
-  if(threadIdx.x == 0) {
+  if(x == 0) {
     *shortestpath = matrix[MAT_SIZE * MAT_SIZE - 1];
-  }/*  
+
     // Put shortest path onto stack
     int j = MAT_SIZE-1, k = MAT_SIZE-1;
     int index = 0;
@@ -82,8 +80,6 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result) 
     
     // Terminate array
     result[index] = -1;
-    
   }
-  */
   __syncthreads(); 
 }

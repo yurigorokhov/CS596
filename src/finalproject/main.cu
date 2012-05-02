@@ -4,8 +4,9 @@
 #include <math.h>
 #include <sys/time.h>
 
-#define MAT_SIZE 32
-#define MAX_ELEMENT 512
+#define MAT_SIZE 4
+#define BLOCK_SIZE 2
+#define MAX_ELEMENT 128
 
 #include "stack.h"
 #include "../include/cuda_util.h"
@@ -20,7 +21,7 @@ typedef struct {
 #include "shortestpath_cuda.h"
 #include "shortestpath.h"
 
-int main() {
+int main(int argc, char**argv) {
   
   printf("\nSHORTEST PATH: %i x %i\n\n", MAT_SIZE, MAT_SIZE);
   
@@ -43,17 +44,20 @@ int main() {
   cudaEventCreate(&stop);
   
   // Copy matrix to global memory
-  int *DevMat, *dev_shortest_path, *dev_result_stack;
+  int *DevMat, *dev_shortest_path, *dev_result_stack, *dev_calc_matrix;
   cudasafe( cudaMalloc((void**)&dev_shortest_path, sizeof(int)), "cudaMalloc" );
   cudasafe( cudaMalloc((void**)&DevMat, MAT_SIZE * MAT_SIZE * sizeof(int)), "cudaMalloc" );
   cudasafe( cudaMalloc((void**)&dev_result_stack, MAT_SIZE * 2 * sizeof(int)), "cudaMalloc" );
   cudasafe( cudaMemcpy(DevMat, mat.array, MAT_SIZE * MAT_SIZE * sizeof(int), cudaMemcpyHostToDevice), "cudaMemcpy" );
+  cudasafe( cudaMalloc((void**)&dev_calc_matrix, MAT_SIZE * MAT_SIZE * sizeof(int)), "cudaMalloc" );
   
   // Compute shortest path with cpu
   int shortestpath = 0;
   int *result_stack = (int*)malloc(MAT_SIZE * 2 * sizeof(int));
   cudaEventRecord(start,0);
-  shortest_path_cuda<<<1,MAT_SIZE>>>(DevMat, dev_shortest_path, dev_result_stack);
+  dim3 threadsPerBlock(BLOCK_SIZE);
+  dim3 blocks(MAT_SIZE / threadsPerBlock.x);
+  shortest_path_cuda<<<blocks,threadsPerBlock>>>(DevMat, dev_shortest_path, dev_result_stack, dev_calc_matrix);
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&elapsedTime, start, stop);
@@ -62,18 +66,20 @@ int main() {
   cudasafe( cudaFree(DevMat), "cudaFree" );
   cudasafe( cudaFree(dev_result_stack), "cudaFree" );
   cudasafe( cudaFree(dev_shortest_path), "cudaFree" );
+  cudasafe( cudaFree(dev_calc_matrix), "cudaFree" );
   
   // Print path taken 
   printf("\nelapsed time: %f\n", elapsedTime);
   printf("\nShortest Path: %i -> ", shortestpath);
-  /*
-  int i = -1; 
-  while(result_stack[++i] >= 0);
-  for(i--; i >= 0; i--) {
-    printf("%i,", result_stack[i]);
+  
+  if(argc > 1) {
+    int i = -1; 
+    while(result_stack[++i] >= 0);
+    for(i--; i >= 0; i--) {
+      printf("%i,", result_stack[i]);
+    }
+    printf("\n");
   }
-  printf("\n");
-  */
   // ######### CPU Implementation #########
   printf("\n\nCPU Implementation: ");
   
@@ -91,10 +97,11 @@ int main() {
   // Print path taken 
   printf("\nelapsed time: %f\n", elapsedTime);
   printf("\nShortest Path: %i -> ", shortestpath);
-  while(!is_empty(&result)) {
-    printf("%i,", pop(&result));
+  if(argc > 1) {
+    while(!is_empty(&result)) {
+      printf("%i,", pop(&result));
+    }
+    printf("\n");
   }
-  printf("\n");
-  
   return 0;
 }

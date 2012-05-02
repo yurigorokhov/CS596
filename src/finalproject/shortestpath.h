@@ -58,7 +58,7 @@ int shortest_path_cpu(Matrix * mat, Stack *result) {
   }
   
   int shortestpath = sum_matrix.array[cols*cols-1];
-  /*
+  
   // Put shortest path onto stack
   int j = cols-1, k = cols-1;
   while(j > 0 || k > 0) {
@@ -80,7 +80,7 @@ int shortest_path_cpu(Matrix * mat, Stack *result) {
       }
     }
   }
-  */
+  
   free(sum_matrix.array);
   return shortestpath;
 }
