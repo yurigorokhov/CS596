@@ -7,20 +7,16 @@
  * Path is returned as 1 for right, 0 for down
  * Note: this algorithm goes from top left to bottom right corner
  */
-__global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result, int * matrix) {
+__global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result, int * matrix, int i) {
   
   int x = blockIdx.x * BLOCK_SIZE + threadIdx.x;
-  if(x == 0) {
+  if(x == 0 && i == 1) {
     matrix[0] = mat[0];
   }
-  
-  // Compute shortest path part1
-  for(int i = 1; i < MAT_SIZE; i++) {
-    __syncthreads();
     
     // only use the threads we need
     if(x <= i) {
-      int idx = x * MAT_SIZE + (i - x);
+      int idx = x * MAT_SIZE + i - x;
       if(x == 0) {
 	matrix[idx] = matrix[idx-1] + mat[idx];
       } else if(i - x == 0) {
@@ -33,11 +29,10 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result, 
 		      : matrix[path2] + mat[idx];
       }
     }
-  }
-  
-  // Compute shortest path part2
-  for(int i = 1; i < MAT_SIZE; i++) {
-    __syncthreads();
+}
+
+__global__ void shortest_path_cuda_2(int * mat, int * shortestpath, int * result, int * matrix, int i) { 
+    int x = blockIdx.x * BLOCK_SIZE + threadIdx.x;
     
     // only use the threads we need
     if(x < MAT_SIZE - i) {
@@ -48,12 +43,14 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result, 
 		    ? matrix[path1] + mat[idx] 
 		    : matrix[path2] + mat[idx];
     }
-  } 
-  
-  
-  // Record path
-  if(x == 0) {
-    *shortestpath = matrix[MAT_SIZE * MAT_SIZE - 1];
+    if(threadIdx.x == 0 && i == MAT_SIZE-1) {
+      *shortestpath = matrix[MAT_SIZE * MAT_SIZE - 1];
+    }
+}
+
+__global__ void shortest_path_cuda_3(int * mat, int * shortestpath, int * result, int * matrix) {
+  if(threadIdx.x == 0) {
+    //*shortestpath = matrix[MAT_SIZE * MAT_SIZE - 1];
 
     // Put shortest path onto stack
     int j = MAT_SIZE-1, k = MAT_SIZE-1;
@@ -81,5 +78,4 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result, 
     // Terminate array
     result[index] = -1;
   }
-  __syncthreads(); 
 }
