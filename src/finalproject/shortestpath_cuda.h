@@ -52,10 +52,11 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result) 
     }
   } 
   
+  
   // Record path
   if(threadIdx.x == 0) {
     *shortestpath = matrix[MAT_SIZE * MAT_SIZE - 1];
-    
+  }/*  
     // Put shortest path onto stack
     int j = MAT_SIZE-1, k = MAT_SIZE-1;
     int index = 0;
@@ -83,5 +84,6 @@ __global__ void shortest_path_cuda(int * mat, int * shortestpath, int * result) 
     result[index] = -1;
     
   }
+  */
   __syncthreads(); 
 }

@@ -4,7 +4,7 @@
 #include <math.h>
 #include <sys/time.h>
 
-#define MAT_SIZE 16
+#define MAT_SIZE 32
 #define MAX_ELEMENT 512
 
 #include "stack.h"
@@ -66,13 +66,14 @@ int main() {
   // Print path taken 
   printf("\nelapsed time: %f\n", elapsedTime);
   printf("\nShortest Path: %i -> ", shortestpath);
+  /*
   int i = -1; 
   while(result_stack[++i] >= 0);
   for(i--; i >= 0; i--) {
     printf("%i,", result_stack[i]);
   }
   printf("\n");
-  
+  */
   // ######### CPU Implementation #########
   printf("\n\nCPU Implementation: ");
   
