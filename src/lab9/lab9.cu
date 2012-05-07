@@ -9,7 +9,10 @@
 
 #include "../include/cuda_util.h"
 
-#define MAT_SIZE 16
+#ifndef MAT_SIZE
+#define MAT_SIZE 512
+#endif
+
 #define BLOCKS 4
 #define BLOCK_SIZE MAT_SIZE/BLOCKS
 #define THREADS_PER_BLOCK (MAT_SIZE/BLOCKS)*(MAT_SIZE/BLOCKS)
@@ -20,6 +23,8 @@ __global__ void matrix_mult_float(float*, float*, float*, int);
 int main(void) {
   cudaEvent_t start, stop;
   float elapsedTime;
+  
+  printf("MAT_SIZE: %ix%i\n", MAT_SIZE, MAT_SIZE);
   
   // Alocate matrices
   int *mat1, *mat2, *result, *dev_mat1, *dev_mat2, *dev_result_mat;

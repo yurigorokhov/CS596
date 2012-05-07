@@ -9,7 +9,7 @@
 
 #include "../include/cuda_util.h"
 
-#define PROX 48
+#define PROX 6
 #define SHARED_MEM_PER_BLOCK 4000
 #define THREADS 2048
 

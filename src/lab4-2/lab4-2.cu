@@ -10,7 +10,7 @@
 #include "../include/cuda_util.h"
 
 #define SIZE 2048
-#define ITERATIONS 5000
+#define ITERATIONS 5000000
 
 __constant__ int array[SIZE];
 

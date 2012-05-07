@@ -52,6 +52,17 @@ int main(void) {
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
   
+  dim3 grid3(1,6);
+  cudaEventRecord(start,0);
+  sum_kernel<<<grid3,85>>>();
+  cudaEventRecord(stop, 0);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&elapsedTime, start, stop);
+  printf("\n1x8, 64 threads per block: %f", elapsedTime);
+  
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  
   dim3 grid3(1,8);
   cudaEventRecord(start,0);
   sum_kernel<<<grid3,64>>>();
