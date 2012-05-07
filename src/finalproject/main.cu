@@ -4,7 +4,7 @@
 #include <math.h>
 #include <sys/time.h>
 
-#define MAT_SIZE 512
+#define MAT_SIZE 512*28
 #define BLOCK_SIZE 512
 #define MAX_ELEMENT 12
 
